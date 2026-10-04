@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.WorkerThread
 import app.lawnchair.preferences2.PreferenceManager2
 import app.lawnchair.preferences2.firstCached
+import app.lawnchair.search.algorithms.engine.provider.apps.AppSearchUsage
 import com.android.launcher3.InvariantDeviceProfile
 import com.android.launcher3.Utilities
 import com.android.launcher3.dagger.ApplicationContext
@@ -51,12 +52,14 @@ class LawnchairModelDelegate @Inject constructor(
     @WorkerThread
     override fun modelLoadComplete() {
         super.modelLoadComplete()
+        AppSearchUsage.getInstance(mContext).register()
         syncPredictor()
     }
 
     @WorkerThread
     override fun destroy() {
         unregisterPredictionModeChanged()
+        AppSearchUsage.getInstance(mContext).unregister()
         lawnchairPredictor.unregister()
         super.destroy()
     }

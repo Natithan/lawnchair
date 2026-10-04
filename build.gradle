@@ -501,6 +501,7 @@ dependencies {
 
     testImplementation libs.junit
     testImplementation libs.google.truth
+    testImplementation libs.kotlinx.coroutines.test
 
     implementation libs.androidx.exifinterface
 

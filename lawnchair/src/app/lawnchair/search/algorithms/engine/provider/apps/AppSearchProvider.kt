@@ -22,18 +22,20 @@ object AppSearchProvider {
         val maxAppResults = prefs.maxAppSearchResultCount.firstCached()
         val enableFuzzySearch = prefs.enableFuzzySearch.firstCached()
 
+        val usageCounts = AppSearchUsage.getInstance(context).snapshot(allApps.data)
+
         val queryNormalized = stripDiacritics(query).lowercase(Locale.getDefault())
 
         val appResults = if (enableFuzzySearch) {
-            fuzzySearch(allApps.data, queryNormalized, maxAppResults, hiddenApps, hiddenAppsInSearch)
+            fuzzySearch(allApps.data, queryNormalized, maxAppResults, hiddenApps, hiddenAppsInSearch, usageCounts)
         } else {
-            normalSearch(allApps.data, queryNormalized, maxAppResults, hiddenApps, hiddenAppsInSearch)
+            normalSearch(allApps.data, queryNormalized, maxAppResults, hiddenApps, hiddenAppsInSearch, usageCounts)
         }
 
         return appResults.map { SearchResult.App(data = it) }
     }
 
-    private fun normalSearch(apps: List<AppInfo>, query: String, maxResultsCount: Int, hiddenApps: Set<String>, hiddenAppsInSearch: String): List<AppInfo> {
+    private fun normalSearch(apps: List<AppInfo>, query: String, maxResultsCount: Int, hiddenApps: Set<String>, hiddenAppsInSearch: String, usageCounts: Map<AppInfo, Int>): List<AppInfo> {
         // Do an intersection of the words in the query and each title, and filter out all the
         // apps that don't match all of the words in the query.
         val matcher = StringMatcherUtility.StringMatcher.getInstance()
@@ -42,9 +44,9 @@ object AppSearchProvider {
             .filterHiddenApps(query, hiddenApps, hiddenAppsInSearch)
             .map { app -> app to AppMatcher.match(stripDiacritics(app.title.toString()), query) }
             .sortedWith(
-                compareBy(
-                    { it.second.type.priority },
-                    { -it.second.score },
+                appSearchComparator(
+                    match = { it.second },
+                    launchCount = { usageCounts[it.first] ?: 0 },
                 ),
             )
             .map { it.first }
@@ -52,7 +54,7 @@ object AppSearchProvider {
             .toList()
     }
 
-    private fun fuzzySearch(apps: List<AppInfo>, query: String, maxResultsCount: Int, hiddenApps: Set<String>, hiddenAppsInSearch: String): List<AppInfo> {
+    private fun fuzzySearch(apps: List<AppInfo>, query: String, maxResultsCount: Int, hiddenApps: Set<String>, hiddenAppsInSearch: String, usageCounts: Map<AppInfo, Int>): List<AppInfo> {
         val filteredApps = apps.asSequence()
             .filterHiddenApps(query, hiddenApps, hiddenAppsInSearch)
             .toList()
@@ -63,9 +65,9 @@ object AppSearchProvider {
                 if (matchResult.type == MatchType.NO_MATCH) null else Pair(app, matchResult)
             }
             .sortedWith(
-                compareBy(
-                    { it.second.type.priority },
-                    { -it.second.score },
+                appSearchComparator(
+                    match = { it.second },
+                    launchCount = { usageCounts[it.first] ?: 0 },
                 ),
             )
             .map { it.first }
