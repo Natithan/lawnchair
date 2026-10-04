@@ -236,7 +236,7 @@ android {
         }
 
         release {
-            resValue("string", "derived_app_name", "Lawnchair")
+            resValue("string", "derived_app_name", "Lawnchair Custom")
             minifyEnabled true
             shrinkResources true
             pseudoLocalesEnabled false
@@ -299,6 +299,11 @@ android {
             proto {
                 srcDirs = ['protos/', 'quickstep/protos_overrides/']
             }
+        }
+
+        test {
+            java.srcDirs = ['unit-tests/src']
+            kotlin.directories.addAll('unit-tests/src')
         }
 
         lawn {
@@ -493,6 +498,9 @@ dependencies {
     ksp libs.dagger.hilt.compiler
 
     implementation libs.google.guava
+
+    testImplementation libs.junit
+    testImplementation libs.google.truth
 
     implementation libs.androidx.exifinterface
 

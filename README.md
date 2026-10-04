@@ -1,4 +1,13 @@
-# Lawnchair 16
+# Lawnchair Custom
+
+This is [Natithan's fork](https://github.com/Natithan/lawnchair) of Lawnchair 16.
+Custom changes prioritize app-name prefixes and matching words in app search,
+and label release builds as **Lawnchair Custom**. Search ranking regression tests
+are included in `unit-tests/src`.
+
+The upstream Lawnchair documentation follows.
+
+## Lawnchair 16
 
 [![Build debug APK](https://github.com/LawnchairLauncher/lawnchair/actions/workflows/ci.yml/badge.svg)](https://github.com/LawnchairLauncher/lawnchair/actions/workflows/ci.yml)
 [![Build release APK](https://github.com/LawnchairLauncher/lawnchair/actions/workflows/release_update.yml/badge.svg)](https://github.com/LawnchairLauncher/lawnchair/actions/workflows/release_update.yml)

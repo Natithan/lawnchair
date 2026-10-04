@@ -28,7 +28,9 @@ internal enum class MatchType(val priority: Int) {
  * 1. **Exact Match:** The query is identical to the app name.
  * 2. **Direct Prefix:** The app name starts with the query.
  * 3. **Initials:** The query matches the beginning of the sequence of initials from the app name's tokens (e.g., "G" or "GM" for "Google Maps").
- * 4. **Token Prefix (Ordered):** Each token in the query is a prefix of the corresponding token in the app name (e.g., "goo map" for "Google Maps").
+ * 4. **Token Prefix (Ordered):** Each token in the query is a prefix of a contiguous sequence
+ *    of tokens in the app name (e.g., "goo map" for "Google Maps" or "map" for
+ *    "Google Maps").
  * 5. **Substring:** The query appears as a substring within the app name.
  * 6. **All Tokens Present:** All tokens from the query are present as prefixes in the app name's tokens, regardless of order.
  * 7. **Fuzzy Match:** A fuzzy string matching algorithm finds a similarity score above a certain cutoff.
@@ -63,10 +65,19 @@ internal object AppMatcher {
             }
         }
 
-        // Rule 3: Token Prefix (Ordered)
+        // Rule 3: Token Prefix (Ordered). The sequence may start at any app-name token so a
+        // query such as "map" is recognized as a word-prefix match for "Google Maps".
         if (qTokens.isNotEmpty() && qTokens.size <= tokens.size) {
-            if (qTokens.indices.all { i -> tokens[i].startsWith(qTokens[i]) }) {
-                return MatchResult(0.82f, MatchType.TOKEN_PREFIX_ORDERED)
+            val matchingStartIndex = (0..tokens.size - qTokens.size).firstOrNull { startIndex ->
+                qTokens.indices.all { queryIndex ->
+                    tokens[startIndex + queryIndex].startsWith(qTokens[queryIndex])
+                }
+            }
+            if (matchingStartIndex != null) {
+                // Prefer an earlier matching word while keeping every token-prefix match below
+                // direct app-name prefixes and above generic substring matches.
+                val score = (0.84f - matchingStartIndex * 0.01f).coerceAtLeast(0.82f)
+                return MatchResult(score, MatchType.TOKEN_PREFIX_ORDERED)
             }
         }
 

@@ -40,6 +40,14 @@ object AppSearchProvider {
         return apps.asSequence()
             .filter { StringMatcherUtility.matches(query, stripDiacritics(it.title.toString()), matcher) }
             .filterHiddenApps(query, hiddenApps, hiddenAppsInSearch)
+            .map { app -> app to AppMatcher.match(stripDiacritics(app.title.toString()), query) }
+            .sortedWith(
+                compareBy(
+                    { it.second.type.priority },
+                    { -it.second.score },
+                ),
+            )
+            .map { it.first }
             .take(maxResultsCount)
             .toList()
     }
